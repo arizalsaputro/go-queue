@@ -113,6 +113,13 @@ func (p *Pusher) KPush(ctx context.Context, k string, v []byte) error {
 		Key:   []byte(k), // current timestamp
 		Value: v,
 	}
+
+	// Extract headers from context
+	headers := GetHeaders(ctx)
+	if headers != nil {
+		msg.Headers = headers
+	}
+
 	if p.executor != nil {
 		return p.executor.Add(msg, len(v))
 	} else {
@@ -130,6 +137,11 @@ func (p *Pusher) PushWithKey(ctx context.Context, key string, v []byte) error {
 	msg := kafka.Message{
 		Key:   []byte(key),
 		Value: v,
+	}
+
+	headers := GetHeaders(ctx)
+	if headers != nil {
+		msg.Headers = headers
 	}
 
 	// wrap message into message carrier

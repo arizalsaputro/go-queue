@@ -227,6 +227,10 @@ func (q *kafkaQueue) startConsumers() {
 				// remove deadline and error control
 				ctx = contextx.ValueOnlyFrom(ctx)
 
+				if len(msg.Headers) != 0 {
+					ctx = WithHeaders(ctx, msg.Headers)
+				}
+
 				if err := q.consumeOne(ctx, string(msg.Key), msg.Value); err != nil {
 					if q.errorHandler != nil {
 						q.errorHandler(ctx, msg, err)
