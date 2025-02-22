@@ -13,6 +13,7 @@ func main() {
 
 	q := kq.MustNewQueue(c, kq.WithHandle(func(ctx context.Context, key string, value []byte) error {
 		fmt.Printf("%s => %s\n", key, value)
+		fmt.Printf("retry count %s\n", kq.GetHeaderValue(ctx, "retry-count"))
 		return nil
 	}))
 	defer q.Stop()

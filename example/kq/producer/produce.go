@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/segmentio/kafka-go"
 	"log"
 	"math/rand"
 	"strconv"
@@ -21,9 +22,7 @@ type message struct {
 
 func main() {
 	pusher := kq.NewPusher([]string{
-		"127.0.0.1:19092",
-		"127.0.0.1:19092",
-		"127.0.0.1:19092",
+		"127.0.0.1:9093",
 	}, "kq")
 
 	ticker := time.NewTicker(time.Millisecond)
@@ -41,11 +40,18 @@ func main() {
 			log.Fatal(err)
 		}
 
-		if err := pusher.Push(context.Background(), string(body)); err != nil {
-			log.Fatal(err)
+		//if err := pusher.Push(context.Background(), string(body)); err != nil {
+		//	log.Fatal(err)
+		//}
+
+		headers := []kafka.Header{
+			{
+				Key:   "retry-count",
+				Value: []byte("2"),
+			},
 		}
 
-		if err := pusher.KPush(context.Background(), "test", string(body)); err != nil {
+		if err := pusher.KPush(kq.WithHeaders(context.Background(), headers), "test", body); err != nil {
 			log.Fatal(err)
 		}
 	}
