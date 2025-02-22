@@ -39,7 +39,7 @@ type mockConsumeHandler struct {
 	mock.Mock
 }
 
-func (m *mockConsumeHandler) Consume(ctx context.Context, key, value string) error {
+func (m *mockConsumeHandler) Consume(ctx context.Context, key string, value []byte) error {
 	args := m.Called(ctx, key, value)
 	return args.Error(0)
 }
@@ -71,7 +71,7 @@ func TestKafkaQueue_consumeOne(t *testing.T) {
 
 	ctx := context.Background()
 	key := "test-key"
-	value := "test-value"
+	value := []byte("test-value")
 
 	handler.On("Consume", ctx, key, value).Return(nil)
 
@@ -132,7 +132,7 @@ func TestKafkaQueue_Start(t *testing.T) {
 
 	mockReader.On("FetchMessage", mock.Anything).Return(msg, nil).Once()
 	mockReader.On("FetchMessage", mock.Anything).Return(kafka.Message{}, io.EOF).Once()
-	handler.On("Consume", mock.Anything, "test-key", "test-value").Return(nil)
+	handler.On("Consume", mock.Anything, "test-key", []byte("test-value")).Return(nil)
 	mockReader.On("CommitMessages", mock.Anything, []kafka.Message{msg}).Return(nil)
 	mockReader.On("Close").Return(nil)
 
