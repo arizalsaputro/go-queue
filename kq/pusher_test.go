@@ -97,7 +97,7 @@ func TestPusher_Push(t *testing.T) {
 
 	mockWriter.On("WriteMessages", mock.Anything, mock.AnythingOfType("[]kafka.Message")).Return(nil)
 
-	err := pusher.Push(ctx, value)
+	err := pusher.Push(ctx, []byte(value))
 	assert.NoError(t, err)
 	mockWriter.AssertExpectations(t)
 }
@@ -115,7 +115,7 @@ func TestPusher_PushWithKey(t *testing.T) {
 
 	mockWriter.On("WriteMessages", mock.Anything, mock.AnythingOfType("[]kafka.Message")).Return(nil)
 
-	err := pusher.PushWithKey(ctx, key, value)
+	err := pusher.PushWithKey(ctx, key, []byte(value))
 	assert.NoError(t, err)
 	mockWriter.AssertExpectations(t)
 }
@@ -134,7 +134,7 @@ func TestPusher_PushWithKey_Error(t *testing.T) {
 	expectedError := errors.New("write error")
 	mockWriter.On("WriteMessages", mock.Anything, mock.AnythingOfType("[]kafka.Message")).Return(expectedError)
 
-	err := pusher.PushWithKey(ctx, key, value)
+	err := pusher.PushWithKey(ctx, key, []byte(value))
 	assert.Error(t, err)
 	assert.Equal(t, expectedError, err)
 	mockWriter.AssertExpectations(t)

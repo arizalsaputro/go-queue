@@ -34,12 +34,12 @@ const (
 )
 
 type (
-	ConsumeHandle func(ctx context.Context, key, value string) error
+	ConsumeHandle func(ctx context.Context, key string, value []byte) error
 
 	ConsumeErrorHandler func(ctx context.Context, msg kafka.Message, err error)
 
 	ConsumeHandler interface {
-		Consume(ctx context.Context, key, value string) error
+		Consume(ctx context.Context, key string, value []byte) error
 	}
 
 	kafkaReader interface {
@@ -167,7 +167,7 @@ func newKafkaQueue(c KqConf, handler ConsumeHandler, options queueOptions) queue
 	}
 	if c.CommitInOrder {
 		q.commitRunner = threading.NewStableRunner(func(msg kafka.Message) kafka.Message {
-			if err := q.consumeOne(context.Background(), string(msg.Key), string(msg.Value)); err != nil {
+			if err := q.consumeOne(context.Background(), string(msg.Key), msg.Value); err != nil {
 				if q.errorHandler != nil {
 					q.errorHandler(context.Background(), msg, err)
 				}
@@ -207,7 +207,7 @@ func (q *kafkaQueue) Stop() {
 	logx.Close()
 }
 
-func (q *kafkaQueue) consumeOne(ctx context.Context, key, val string) error {
+func (q *kafkaQueue) consumeOne(ctx context.Context, key string, val []byte) error {
 	startTime := timex.Now()
 	err := q.handler.Consume(ctx, key, val)
 	q.metrics.Add(stat.Task{
@@ -227,7 +227,11 @@ func (q *kafkaQueue) startConsumers() {
 				// remove deadline and error control
 				ctx = contextx.ValueOnlyFrom(ctx)
 
-				if err := q.consumeOne(ctx, string(msg.Key), string(msg.Value)); err != nil {
+				if len(msg.Headers) != 0 {
+					ctx = WithHeaders(ctx, msg.Headers)
+				}
+
+				if err := q.consumeOne(ctx, string(msg.Key), msg.Value); err != nil {
 					if q.errorHandler != nil {
 						q.errorHandler(ctx, msg, err)
 					}
@@ -342,8 +346,8 @@ type innerConsumeHandler struct {
 	handle ConsumeHandle
 }
 
-func (ch innerConsumeHandler) Consume(ctx context.Context, k, v string) error {
-	return ch.handle(ctx, k, v)
+func (ch innerConsumeHandler) Consume(ctx context.Context, key string, value []byte) error {
+	return ch.handle(ctx, key, value)
 }
 
 func ensureQueueOptions(c KqConf, options *queueOptions) {
