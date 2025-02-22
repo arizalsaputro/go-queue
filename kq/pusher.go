@@ -108,10 +108,10 @@ func (p *Pusher) Name() string {
 }
 
 // KPush sends a message to the Kafka topic.
-func (p *Pusher) KPush(ctx context.Context, k, v string) error {
+func (p *Pusher) KPush(ctx context.Context, k string, v []byte) error {
 	msg := kafka.Message{
 		Key:   []byte(k), // current timestamp
-		Value: []byte(v),
+		Value: v,
 	}
 	if p.executor != nil {
 		return p.executor.Add(msg, len(v))
@@ -121,15 +121,15 @@ func (p *Pusher) KPush(ctx context.Context, k, v string) error {
 }
 
 // Push sends a message to the Kafka topic.
-func (p *Pusher) Push(ctx context.Context, v string) error {
+func (p *Pusher) Push(ctx context.Context, v []byte) error {
 	return p.PushWithKey(ctx, strconv.FormatInt(time.Now().UnixNano(), 10), v)
 }
 
 // PushWithKey sends a message with the given key to the Kafka topic.
-func (p *Pusher) PushWithKey(ctx context.Context, key, v string) error {
+func (p *Pusher) PushWithKey(ctx context.Context, key string, v []byte) error {
 	msg := kafka.Message{
 		Key:   []byte(key),
-		Value: []byte(v),
+		Value: v,
 	}
 
 	// wrap message into message carrier
