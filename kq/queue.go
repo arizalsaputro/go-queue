@@ -209,6 +209,13 @@ func (q *kafkaQueue) Stop() {
 
 func (q *kafkaQueue) consumeOne(ctx context.Context, key string, val []byte) error {
 	startTime := timex.Now()
+
+	if q.c.ContextTimeout != 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, q.c.ContextTimeout)
+		defer cancel()
+	}
+
 	err := q.handler.Consume(ctx, key, val)
 	q.metrics.Add(stat.Task{
 		Duration: timex.Since(startTime),
